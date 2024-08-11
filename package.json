@@ -17,12 +17,24 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "prisma:generate": "cd ./src/libraries/dal/prisma && prisma generate ",
+    "prisma:studio": "cd ./src/libraries/dal/prisma && prisma studio ",
+    "prisma:db:push": "cd ./src/libraries/dal/prisma && prisma db push",
+    "prisma:migrate:dev": "cd ./src/libraries/dal/prisma && prisma migrate dev ",
+    "prisma:migrate:deploy": "cd ./src/libraries/dal/prisma && prisma migrate deploy",
+    "prisma:db:reset": "cd ./src/libraries/dal/prisma && npx prisma db push --force-reset && npx prisma db push"
   },
   "dependencies": {
+    "@nestjs/bullmq": "^10.2.0",
     "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
+    "@prisma/client": "^5.18.0",
+    "bullmq": "^5.12.0",
+    "mailparser": "^3.7.1",
+    "prisma": "^5.18.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"
   },
@@ -32,6 +44,7 @@
     "@nestjs/testing": "^10.0.0",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
+    "@types/mailparser": "^3.4.4",
     "@types/node": "^20.3.1",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
