@@ -55,50 +55,48 @@ export class InboundMailProcessor extends WorkerHost {
   }
 
   async saveEmail(job: Job<VisitorViewMailJob['data']>) {
-    const rawEmail = JSON.parse(job.data.rawMail);
-    const username = job.data.slug;
+    const { rawMail, slug: username } = job.data;
+    const rawEmail = JSON.parse(rawMail);
     const parsedEmail = await simpleParser(rawEmail);
 
-    const inbox = await this._emailInboxService.getEmailInbox({
-      username: username,
-    });
+    const [inbox, isThreadExist] = await Promise.all([
+      this._emailInboxService.getEmailInbox({ username }),
+      parsedEmail.references
+        ? this._conversationService.findByThreadId({
+            emailusername: username,
+            threadId: Array.isArray(parsedEmail.references)
+              ? parsedEmail.references[0]
+              : parsedEmail.references,
+          })
+        : null,
+    ]);
 
-    let isThreadExist;
-    // checking whether the mail belongs to already existing thread.
-    if (parsedEmail.references) {
-      isThreadExist = await this._conversationService.findByThreadId({
-        emailusername: username,
-        threadId: Array.isArray(parsedEmail.references)
-          ? parsedEmail.references[0]
-          : parsedEmail.references,
-      });
+    if (!inbox) {
+      await this._emailInboxService.createEmailInbox({ username });
     }
 
-    console.log('isThreadExist', isThreadExist);
+    let threadId: string;
+    let newConversation;
+
     if (isThreadExist) {
-      // add mail to thread
-      const newmessage = await this._messageService.create({
-        parsedEmail,
-        rawEmail: job.data.rawMail,
-        threadId: isThreadExist.threadId,
-      });
-      console.log(
-        newmessage,
-        'new message if message belong to alreday existing thread',
-      );
+      threadId = isThreadExist.threadId;
     } else {
-      const newConversation =
-        await this._conversationService.createConversation({
-          username,
-          parsedEmail,
-        });
-      console.log('new conversation', newConversation);
-      const newmessage = await this._messageService.create({
+      newConversation = await this._conversationService.createConversation({
+        username,
         parsedEmail,
-        rawEmail: job.data.rawMail,
-        threadId: newConversation.threadId,
       });
-      console.log('new message', newmessage);
+      threadId = newConversation.threadId;
+    }
+
+    const message = await this._messageService.create({
+      parsedEmail,
+      rawEmail: rawMail,
+      threadId,
+    });
+
+    this.logger.log('New message:', message);
+    if (newConversation) {
+      this.logger.log('New conversation:', newConversation);
     }
   }
 

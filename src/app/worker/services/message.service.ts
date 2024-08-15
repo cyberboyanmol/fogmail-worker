@@ -12,19 +12,18 @@ export class MessageService {
     rawEmail: string;
     threadId: string;
   }) {
-    const references = Array.isArray(data.parsedEmail.references)
-      ? data.parsedEmail.references
-      : data.parsedEmail.references
-        ? [data.parsedEmail.references]
-        : [];
-
     const toAddresses = this.normalizeAddresses(data.parsedEmail.to);
     const ccAddresses = this.normalizeAddresses(data.parsedEmail.cc);
     const bccAddresses = this.normalizeAddresses(data.parsedEmail.bcc);
     const fromAddress = this.normalizeAddresses(data.parsedEmail.from)[0];
     const headers = this.normalizeHeaders(data.parsedEmail.headerLines);
     const attachments = this.normalizeAttachments(data.parsedEmail.attachments);
-
+    const headersObject = Object.fromEntries(data.parsedEmail.headers);
+    const references = Array.isArray(data.parsedEmail.references)
+      ? data.parsedEmail.references
+      : data.parsedEmail.references
+        ? [data.parsedEmail.references]
+        : [];
     return this._messageRepository.create({
       messageId: data.parsedEmail.messageId,
       conversation: {
@@ -33,7 +32,7 @@ export class MessageService {
       subject: data.parsedEmail.subject,
       rawMail: data.rawEmail,
       size: data.rawEmail.length * 2,
-      headers: this.headersToJson(data.parsedEmail.headers),
+      headers: JSON.stringify(headersObject, null, 2),
       text: data.parsedEmail.text,
       textAsHtml: data.parsedEmail.textAsHtml,
       html: data.parsedEmail.html,
@@ -105,16 +104,5 @@ export class MessageService {
       checksum: attachment.checksum || '',
       size: attachment.size,
     }));
-  }
-  private headersToJson(headers: any): Record<string, string | string[]> {
-    const result: Record<string, string | string[]> = {};
-    for (const [key, value] of Object.entries(headers)) {
-      if (Array.isArray(value)) {
-        result[key] = value.map((v) => v.toString());
-      } else if (value !== null && value !== undefined) {
-        result[key] = value.toString();
-      }
-    }
-    return result;
   }
 }

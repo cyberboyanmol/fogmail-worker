@@ -37,12 +37,12 @@ model Message {
     conversation   Conversation  @relation(fields: [conversationId], references: [threadId])
     conversationId String
     messageId      String        @unique
-    fromAddress    Address?      @relation("MessageFrom", fields: [fromAddressId], references: [id])
-    fromAddressId  String?
+    fromAddress    Address       @relation("MessageFrom", fields: [fromAddressId], references: [id])
+    fromAddressId  String
     subject        String
     rawMail        String
     size           Int
-    headers        Json
+    headers        String
     text           String?
     textAsHtml     String?
     html           String?
