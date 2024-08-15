@@ -4,6 +4,9 @@ import { ConfigModule } from '@nestjs/config';
 import { INBOUND_MAIL_PARSE_QUEUE } from 'src/libraries/queue/queue.constants';
 import { QueueModule } from 'src/libraries/queue/queue.module';
 import { InboundMailProcessor } from './processors/inbound-mail.processor';
+import { EmailInboxService } from './services/email-inbox.service';
+import { ConversationService } from './services/conversation.service';
+import { MessageService } from './services/message.service';
 
 @Module({
   imports: [
@@ -35,7 +38,12 @@ import { InboundMailProcessor } from './processors/inbound-mail.processor';
       queues: [INBOUND_MAIL_PARSE_QUEUE],
     }),
   ],
-  providers: [InboundMailProcessor],
+  providers: [
+    InboundMailProcessor,
+    EmailInboxService,
+    ConversationService,
+    MessageService,
+  ],
   exports: [],
 })
 export class WorkerModule {}

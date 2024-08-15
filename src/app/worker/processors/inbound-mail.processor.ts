@@ -9,6 +9,9 @@ import {
 } from 'src/libraries/queue/jobs/job.payload';
 import { INBOUND_MAIL_PARSE_QUEUE } from 'src/libraries/queue/queue.constants';
 import { simpleParser } from 'mailparser';
+import { EmailInboxService } from '../services/email-inbox.service';
+import { ConversationService } from '../services/conversation.service';
+import { MessageService } from '../services/message.service';
 
 @Processor(INBOUND_MAIL_PARSE_QUEUE, {
   concurrency: 50,
@@ -20,6 +23,9 @@ export class InboundMailProcessor extends WorkerHost {
 
   constructor(
     @InjectInboundMailParseQueue() private _inboundMailParseQueue: Queue,
+    private _emailInboxService: EmailInboxService,
+    private _conversationService: ConversationService,
+    private _messageService: MessageService,
   ) {
     super();
   }
@@ -29,13 +35,10 @@ export class InboundMailProcessor extends WorkerHost {
   ): Promise<void> {
     try {
       switch (job.name) {
-        // for visitor views
         case QueueEventJobPattern.MAIL_VISITOR_VIEW:
-          const rawMail = JSON.parse(job.data.rawMail);
-          const parsedEmail = await simpleParser(rawMail);
-          console.log('slug:', job.data.slug);
-          console.log('Parsed Email:', parsedEmail);
-          // console.log(job.data);
+          // const parsedMail = await simpleParser(JSON.parse(job.data.rawMail));
+          // console.log(parsedMail);
+          await this.saveEmail(job);
           break;
         case QueueEventJobPattern.MAIL_MEMBER_VIEW:
           console.log(job.data);
@@ -48,6 +51,54 @@ export class InboundMailProcessor extends WorkerHost {
         error.stack,
       );
       throw error; // Throwing the error will cause the job to be re-queued for retry
+    }
+  }
+
+  async saveEmail(job: Job<VisitorViewMailJob['data']>) {
+    const rawEmail = JSON.parse(job.data.rawMail);
+    const username = job.data.slug;
+    const parsedEmail = await simpleParser(rawEmail);
+
+    const inbox = await this._emailInboxService.getEmailInbox({
+      username: username,
+    });
+
+    let isThreadExist;
+    // checking whether the mail belongs to already existing thread.
+    if (parsedEmail.references) {
+      isThreadExist = await this._conversationService.findByThreadId({
+        emailusername: username,
+        threadId: Array.isArray(parsedEmail.references)
+          ? parsedEmail.references[0]
+          : parsedEmail.references,
+      });
+    }
+
+    console.log('isThreadExist', isThreadExist);
+    if (isThreadExist) {
+      // add mail to thread
+      const newmessage = await this._messageService.create({
+        parsedEmail,
+        rawEmail: job.data.rawMail,
+        threadId: isThreadExist.threadId,
+      });
+      console.log(
+        newmessage,
+        'new message if message belong to alreday existing thread',
+      );
+    } else {
+      const newConversation =
+        await this._conversationService.createConversation({
+          username,
+          parsedEmail,
+        });
+      console.log('new conversation', newConversation);
+      const newmessage = await this._messageService.create({
+        parsedEmail,
+        rawEmail: job.data.rawMail,
+        threadId: newConversation.threadId,
+      });
+      console.log('new message', newmessage);
     }
   }
 

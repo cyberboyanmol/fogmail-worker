@@ -18,31 +18,27 @@ model EmailInbox {
 }
 
 model Conversation {
-    id           String     @id @default(uuid())
-    emailInbox   EmailInbox @relation(fields: [emailInboxId], references: [id])
-    emailInboxId String
-    threadId     String?
-    numMessages  Int        @default(0)
-    numUnread    Int        @default(0)
-    subject      String
-    senders      Address[]  @relation("ConversationSenders")
-    recipients   Address[]  @relation("ConversationRecipients")
-    messages     Message[]
-    createdAt    DateTime   @default(now())
-    updatedAt    DateTime   @updatedAt
+    id            String     @id @default(uuid())
+    emailInbox    EmailInbox @relation(fields: [emailusername], references: [username])
+    emailusername String
+    threadId      String     @unique
+    subject       String
+    messages      Message[]
+    createdAt     DateTime   @default(now())
+    updatedAt     DateTime   @updatedAt
 
-    @@index([emailInboxId])
+    @@index([emailusername])
     @@index([threadId])
     @@index([subject])
 }
 
 model Message {
     id             String        @id @default(uuid())
-    conversation   Conversation  @relation(fields: [conversationId], references: [id])
+    conversation   Conversation  @relation(fields: [conversationId], references: [threadId])
     conversationId String
     messageId      String        @unique
-    fromAddress    Address       @relation("MessageFrom", fields: [fromAddressId], references: [id])
-    fromAddressId  String
+    fromAddress    Address?      @relation("MessageFrom", fields: [fromAddressId], references: [id])
+    fromAddressId  String?
     subject        String
     rawMail        String
     size           Int
@@ -54,14 +50,13 @@ model Message {
     references     String[]
     date           DateTime
     status         MessageStatus @default(UNREAD)
+    ccList         Address[]     @relation("MessageCC")
+    bccList        Address[]     @relation("MessageBCC")
+    toList         Address[]     @relation("MessageTo")
+    attachments    Attachment[]
+    Header         Header[]
     createdAt      DateTime      @default(now())
     updatedAt      DateTime      @updatedAt
-
-    ccList      Address[]    @relation("MessageCC")
-    bccList     Address[]    @relation("MessageBCC")
-    toList      Address[]    @relation("MessageTo")
-    attachments Attachment[]
-    Header      Header[]
 
     @@index([conversationId, date])
     @@index([messageId])
@@ -69,30 +64,27 @@ model Message {
 }
 
 model Address {
-    id        String   @id @default(uuid())
-    name      String   @default("")
-    address   String   @unique
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    senderConversations    Conversation[] @relation("ConversationSenders")
-    recipientConversations Conversation[] @relation("ConversationRecipients")
-    fromMessages           Message[]      @relation("MessageFrom")
-    ccMessages             Message[]      @relation("MessageCC")
-    bccMessages            Message[]      @relation("MessageBCC")
-    toMessages             Message[]      @relation("MessageTo")
+    id           String    @id @default(uuid())
+    name         String    @default("")
+    address      String    @unique
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+    fromMessages Message[] @relation("MessageFrom")
+    ccMessages   Message[] @relation("MessageCC")
+    bccMessages  Message[] @relation("MessageBCC")
+    toMessages   Message[] @relation("MessageTo")
 
     @@index([address])
 }
 
 model Attachment {
     id                 String   @id @default(uuid())
-    message            Message  @relation(fields: [messageId], references: [id])
+    message            Message  @relation(fields: [messageId], references: [messageId])
     messageId          String
     contentType        String
     contentDisposition String
     fileName           String
-    cid                String?
+    cid                String   @unique
     checksum           String
     size               Int
     createdAt          DateTime @default(now())
@@ -105,7 +97,7 @@ model Header {
     id        String  @id @default(uuid())
     key       String
     value     String
-    Message   Message @relation(fields: [messageId], references: [id])
+    Message   Message @relation(fields: [messageId], references: [messageId])
     messageId String
 
     @@index([messageId])
@@ -114,5 +106,4 @@ model Header {
 enum MessageStatus {
     READ
     UNREAD
-    ARCHIVED
 }
