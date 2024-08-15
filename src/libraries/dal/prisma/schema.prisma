@@ -54,7 +54,7 @@ model Message {
     bccList        Address[]     @relation("MessageBCC")
     toList         Address[]     @relation("MessageTo")
     attachments    Attachment[]
-    Header         Header[]
+    headerLines    Header[]
     createdAt      DateTime      @default(now())
     updatedAt      DateTime      @updatedAt
 
