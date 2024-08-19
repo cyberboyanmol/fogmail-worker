@@ -24,6 +24,9 @@ export class MessageService {
       : data.parsedEmail.references
         ? [data.parsedEmail.references]
         : [];
+
+    const encoder = new TextEncoder();
+    const encoded = encoder.encode(data.rawEmail);
     return this._messageRepository.create({
       messageId: data.parsedEmail.messageId,
       conversation: {
@@ -31,7 +34,7 @@ export class MessageService {
       },
       subject: data.parsedEmail.subject,
       rawMail: data.rawEmail,
-      size: data.rawEmail.length * 2,
+      size: encoded.length,
       headers: JSON.stringify(headersObject, null, 2),
       text: data.parsedEmail.text,
       textAsHtml: data.parsedEmail.textAsHtml,
