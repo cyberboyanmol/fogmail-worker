@@ -63,7 +63,7 @@ export class InboundMailProcessor extends WorkerHost {
       this._emailInboxService.getEmailInbox({ username }),
       parsedEmail.references
         ? this._conversationService.findByThreadId({
-            emailusername: username,
+            username,
             threadId: Array.isArray(parsedEmail.references)
               ? parsedEmail.references[0]
               : parsedEmail.references,
@@ -75,23 +75,23 @@ export class InboundMailProcessor extends WorkerHost {
       await this._emailInboxService.createEmailInbox({ username });
     }
 
-    let threadId: string;
+    let conversationId: string;
     let newConversation;
 
     if (isThreadExist) {
-      threadId = isThreadExist.threadId;
+      conversationId = isThreadExist.id;
     } else {
       newConversation = await this._conversationService.createConversation({
         username,
         parsedEmail,
       });
-      threadId = newConversation.threadId;
+      conversationId = newConversation.id;
     }
 
     const message = await this._messageService.create({
       parsedEmail,
       rawEmail: rawMail,
-      threadId,
+      conversationId,
     });
 
     this.logger.log('New message:', message);

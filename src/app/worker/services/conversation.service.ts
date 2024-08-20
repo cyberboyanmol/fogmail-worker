@@ -9,7 +9,7 @@ export class ConversationService {
   public async findByThreadId(data: Partial<Conversation>) {
     return this._conversationRepository.find({
       threadId: data.threadId,
-      emailusername: data.emailusername,
+      username: data.username,
     });
   }
 
@@ -19,7 +19,7 @@ export class ConversationService {
   }) {
     return this._conversationRepository.create({
       subject: data.parsedEmail.subject,
-      emailusername: data.username,
+      username: data.username,
       threadId: data.parsedEmail.messageId,
     });
   }

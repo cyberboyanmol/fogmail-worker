@@ -7,7 +7,7 @@ datasource db {
     url      = env("POSTGRESQL_DB_URL")
 }
 
-model EmailInbox {
+model Inbox {
     id            String         @id @default(uuid())
     username      String         @unique
     conversations Conversation[]
@@ -18,23 +18,22 @@ model EmailInbox {
 }
 
 model Conversation {
-    id            String     @id @default(uuid())
-    emailInbox    EmailInbox @relation(fields: [emailusername], references: [username])
-    emailusername String
-    threadId      String     @unique
-    subject       String
-    messages      Message[]
-    createdAt     DateTime   @default(now())
-    updatedAt     DateTime   @updatedAt
+    id        String    @id @default(uuid())
+    inbox     Inbox     @relation(fields: [username], references: [username])
+    username  String
+    threadId  String    @unique
+    subject   String
+    messages  Message[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
 
-    @@index([emailusername])
+    @@index([username])
     @@index([threadId])
-    @@index([subject])
 }
 
 model Message {
     id             String        @id @default(uuid())
-    conversation   Conversation  @relation(fields: [conversationId], references: [threadId])
+    conversation   Conversation  @relation(fields: [conversationId], references: [id])
     conversationId String
     messageId      String        @unique
     fromAddress    Address       @relation("MessageFrom", fields: [fromAddressId], references: [id])
@@ -58,7 +57,7 @@ model Message {
     createdAt      DateTime      @default(now())
     updatedAt      DateTime      @updatedAt
 
-    @@index([conversationId, date])
+    @@index([conversationId])
     @@index([messageId])
     @@index([fromAddressId])
 }
@@ -79,7 +78,7 @@ model Address {
 
 model Attachment {
     id                 String   @id @default(uuid())
-    message            Message  @relation(fields: [messageId], references: [messageId])
+    message            Message  @relation(fields: [messageId], references: [id])
     messageId          String
     contentType        String
     contentDisposition String
@@ -97,7 +96,7 @@ model Header {
     id        String  @id @default(uuid())
     key       String
     value     String
-    Message   Message @relation(fields: [messageId], references: [messageId])
+    Message   Message @relation(fields: [messageId], references: [id])
     messageId String
 
     @@index([messageId])

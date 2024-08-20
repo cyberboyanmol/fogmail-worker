@@ -11,7 +11,7 @@ export class ConversationRepository {
       data: {
         subject: data.subject,
         threadId: data.threadId,
-        emailusername: data.emailusername,
+        username: data.username,
       },
     });
   }
@@ -20,7 +20,7 @@ export class ConversationRepository {
     return this._conversation.model.conversation.findUnique({
       where: {
         threadId: data.threadId,
-        emailusername: data.emailusername,
+        username: data.username,
       },
     });
   }

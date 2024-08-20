@@ -10,7 +10,7 @@ export class MessageService {
   public async create(data: {
     parsedEmail: ParsedMail;
     rawEmail: string;
-    threadId: string;
+    conversationId: string;
   }) {
     const toAddresses = this.normalizeAddresses(data.parsedEmail.to);
     const ccAddresses = this.normalizeAddresses(data.parsedEmail.cc);
@@ -30,7 +30,7 @@ export class MessageService {
     return this._messageRepository.create({
       messageId: data.parsedEmail.messageId,
       conversation: {
-        connect: { threadId: data.threadId },
+        connect: { id: data.conversationId },
       },
       subject: data.parsedEmail.subject,
       rawMail: data.rawEmail,
