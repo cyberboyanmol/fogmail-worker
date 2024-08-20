@@ -42,9 +42,9 @@ model Message {
     rawMail        String
     size           Int
     headers        String
-    text           String?
-    textAsHtml     String?
-    html           String?
+    text           String        @default("")
+    textAsHtml     String        @default("")
+    html           String        @default("")
     inReplyTo      String?
     references     String[]
     date           DateTime
